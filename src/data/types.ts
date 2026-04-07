@@ -11,6 +11,7 @@
 
 export type ElementDetailProps = {
     element: Element | null;
+    onClose: () => void;
 };
 
 export type ElementCellProps = {
