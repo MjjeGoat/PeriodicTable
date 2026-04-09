@@ -1,14 +1,21 @@
-import type {SearchBarProps} from '../data/types.ts';
+import type { SearchBarProps } from '../data/types'
 
-const SearchBar = ({ search, setSearch }: SearchBarProps) => {
-    return (
-        <input
-            type="text"
-            placeholder="Search by name or symbol..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-        />
-    );
-};
+function SearchBar({ search, setSearch }: SearchBarProps) {
+  return (
+    <form className="searchbar" role="search">
+      <label className="searchbar-label" htmlFor="element-search">
+        Search
+      </label>
+      <input
+        id="element-search"
+        className="searchbar-input"
+        type="search"
+        placeholder="Search by symbol or name"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+      />
+    </form>
+  )
+}
 
-export default SearchBar;
+export default SearchBar

@@ -1,23 +1,40 @@
-import type { Element } from "../data/types";
-import ElementCell from "./ElementCell";
+import SearchBar from './SearchBar'
+import ElementCell from './ElementCell'
+import type { Element, SearchBarProps } from '../data/types'
 
-type Props = {
-    elements: Element[];
-    onSelect: (element: Element) => void;
-};
+type PeriodicTableProps = SearchBarProps & {
+  elements: Element[]
+  selectedElement: Element | null
+  onSelect: (element: Element) => void
+}
 
-const PeriodicTable = ({ elements, onSelect }: Props) => {
-    return (
-        <div>
-            {elements.map((el) => (
-                <ElementCell
-                    key={el.atomicNumber}
-                    element={el}
-                    onClick={onSelect}
-                />
-            ))}
+function PeriodicTable({
+  elements,
+  selectedElement,
+  onSelect,
+  search,
+  setSearch,
+}: PeriodicTableProps) {
+  return (
+    <section className="periodic-table">
+      <div className="table-search-inline">
+        <SearchBar search={search} setSearch={setSearch} />
+      </div>
+
+      <div className="table-scroll">
+        <div className="table-grid">
+          {elements.map((element) => (
+            <ElementCell
+              key={element.atomicNumber}
+              element={element}
+              isSelected={selectedElement?.atomicNumber === element.atomicNumber}
+              onClick={onSelect}
+            />
+          ))}
         </div>
-    );
-};
+      </div>
+    </section>
+  )
+}
 
-export default PeriodicTable;
+export default PeriodicTable
