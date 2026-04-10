@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header'
 import SearchBar from '../components/SearchBar'
 import PeriodicTable from '../components/PeriodicTable'
@@ -9,24 +9,37 @@ import '../App.css'
 
 function App() {
   const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedElement, setSelectedElement] = useState<Element | null>(elements[0] ?? null)
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [keyboardOffset, setKeyboardOffset] = useState(0)
 
   const filteredElements = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
+    const hasSearch = normalizedSearch.length > 0
 
     return elements.filter((element) => {
       const matchesSearch =
-        normalizedSearch.length === 0 ||
+        !hasSearch ||
         element.name.toLowerCase().includes(normalizedSearch) ||
         element.symbol.toLowerCase().includes(normalizedSearch)
 
       const matchesCategory =
-        selectedCategory === null || element.category === selectedCategory
+        hasSearch ||
+        selectedCategory === 'all' ||
+        element.category === selectedCategory
 
       return matchesSearch && matchesCategory
     })
   }, [search, selectedCategory])
+
+  const matchedAtomicNumbers = useMemo(
+    () => new Set(filteredElements.map((element) => element.atomicNumber)),
+    [filteredElements],
+  )
+
+  const mobileElements =
+    search.trim().length > 0 || selectedCategory !== 'all' ? filteredElements : []
 
   const categories = [
     { label: 'Alkali metals', value: 'alkali metal', tone: 'default' as const },
@@ -40,32 +53,82 @@ function App() {
       value: 'transition metal',
       tone: 'muted' as const,
     },
+    {
+      label: 'Post-transition metals',
+      value: 'post-transition metal',
+      tone: 'muted' as const,
+    },
+    { label: 'Lanthanides', value: 'lanthanide', tone: 'default' as const },
+    { label: 'Actinides', value: 'actinide', tone: 'default' as const },
+    { label: 'Metalloids', value: 'metalloid', tone: 'muted' as const },
+    { label: 'Other nonmetals', value: 'nonmetal', tone: 'default' as const },
     { label: 'Halogens', value: 'halogen', tone: 'dark' as const },
+    { label: 'Noble gases', value: 'noble gas', tone: 'dark' as const },
   ]
 
   const handleCategorySelect = (category: string) => {
-    setSelectedCategory((currentCategory) =>
-      currentCategory === category ? null : category,
-    )
+    setSelectedCategory(category)
   }
+
+  useEffect(() => {
+    if (filteredElements.length === 0) {
+      setSelectedElement(null)
+      return
+    }
+
+    if (
+      selectedElement === null ||
+      !filteredElements.some(
+        (element) => element.atomicNumber === selectedElement.atomicNumber,
+      )
+    ) {
+      setSelectedElement(filteredElements[0])
+    }
+  }, [filteredElements, selectedElement])
+
+  useEffect(() => {
+    if (!isSearchFocused || typeof window === 'undefined' || !window.visualViewport) {
+      setKeyboardOffset(0)
+      return
+    }
+
+    const viewport = window.visualViewport
+
+    const updateKeyboardOffset = () => {
+      const nextOffset = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop,
+      )
+      setKeyboardOffset(nextOffset)
+    }
+
+    updateKeyboardOffset()
+    viewport.addEventListener('resize', updateKeyboardOffset)
+    viewport.addEventListener('scroll', updateKeyboardOffset)
+
+    return () => {
+      viewport.removeEventListener('resize', updateKeyboardOffset)
+      viewport.removeEventListener('scroll', updateKeyboardOffset)
+    }
+  }, [isSearchFocused])
 
   return (
     <div className="app-shell">
-      <div className="app-blob app-blob-left" aria-hidden="true" />
-      <div className="app-blob app-blob-right" aria-hidden="true" />
-
       <Header search={search} setSearch={setSearch} />
 
       <main className="app-main">
-        <section className="mobile-home-card">
-          <div className="logo-badge" aria-hidden="true">
-            <span>IPT</span>
+        <section className="mobile-home-card" aria-label="Mobile hero">
+          <div className="logo-placeholder" aria-label="Logo placeholder">
+            <span>Logo</span>
           </div>
 
-          <div className="mobile-search-wrap">
-            <SearchBar search={search} setSearch={setSearch} />
+          <div className="mobile-home-copy">
+            <h1>Periodic Table</h1>
+            <p>Browse categories and tap any element to open its detail.</p>
           </div>
+        </section>
 
+        <section className="mobile-category-card">
           <nav className="mobile-actions" aria-label="Element categories">
             {categories.map((category) => (
               <button
@@ -87,24 +150,64 @@ function App() {
           </nav>
         </section>
 
-        <section className="desktop-table-card">
+        <div className="desktop-content-layout">
+          <section className="desktop-table-card">
+            <PeriodicTable
+              elements={elements}
+              selectedElement={selectedElement}
+              onSelect={setSelectedElement}
+              layout="desktop"
+              matchedAtomicNumbers={matchedAtomicNumbers}
+              categories={categories.map(({ label, value }) => ({ label, value }))}
+              selectedCategory={selectedCategory}
+              onCategorySelect={handleCategorySelect}
+            />
+          </section>
+        </div>
+
+        <section className="mobile-table-card">
           <PeriodicTable
-            elements={filteredElements}
+            elements={mobileElements}
             selectedElement={selectedElement}
             onSelect={setSelectedElement}
-            search={search}
-            setSearch={setSearch}
+            layout="mobile"
           />
         </section>
 
-        <aside className="detail-dock">
+        <section className="mobile-detail-card">
           <ElementDetail element={selectedElement} />
-        </aside>
+        </section>
       </main>
 
-      <footer className="app-footer">
-        <div className="footer-band" />
-      </footer>
+      <div
+        className="mobile-bottom-search"
+        style={{ bottom: `${keyboardOffset}px` }}
+      >
+        <button
+          type="button"
+          className="icon-button mobile-bottom-search__button"
+          aria-label="Toggle contrast"
+        >
+          ◐
+        </button>
+
+        <div className="mobile-bottom-search__field">
+          <SearchBar
+            search={search}
+            setSearch={setSearch}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+          />
+        </div>
+
+        <button
+          type="button"
+          className="icon-button mobile-bottom-search__button"
+          aria-label="Open info"
+        >
+          ⓘ
+        </button>
+      </div>
     </div>
   )
 }

@@ -1,18 +1,20 @@
+import { useId } from 'react'
 import type { SearchBarProps } from '../data/types'
 
-function SearchBar({ search, setSearch }: SearchBarProps) {
+function SearchBar({ search, setSearch, onFocus, onBlur }: SearchBarProps) {
+  const inputId = useId()
+
   return (
     <form className="searchbar" role="search">
-      <label className="searchbar-label" htmlFor="element-search">
-        Search
-      </label>
       <input
-        id="element-search"
+        id={inputId}
         className="searchbar-input"
         type="search"
         placeholder="Search by symbol or name"
         value={search}
         onChange={(event) => setSearch(event.target.value)}
+        onFocus={onFocus}
+        onBlur={onBlur}
       />
     </form>
   )

@@ -1,38 +1,224 @@
-import SearchBar from './SearchBar'
+import { useRef, useState } from 'react'
 import ElementCell from './ElementCell'
-import type { Element, SearchBarProps } from '../data/types'
+import ElementDetail from './ElementDetail'
+import type { Element } from '../data/types'
 
-type PeriodicTableProps = SearchBarProps & {
+type CategoryOption = {
+  label: string
+  value: string
+}
+
+type PeriodicTableProps = {
   elements: Element[]
   selectedElement: Element | null
   onSelect: (element: Element) => void
+  layout?: 'mobile' | 'desktop'
+  matchedAtomicNumbers?: Set<number>
+  categories?: CategoryOption[]
+  selectedCategory?: string | null
+  onCategorySelect?: (category: string) => void
 }
 
 function PeriodicTable({
   elements,
   selectedElement,
   onSelect,
-  search,
-  setSearch,
+  layout = 'mobile',
+  matchedAtomicNumbers,
+  categories = [],
+  selectedCategory = null,
+  onCategorySelect,
 }: PeriodicTableProps) {
-  return (
-    <section className="periodic-table">
-      <div className="table-search-inline">
-        <SearchBar search={search} setSearch={setSearch} />
-      </div>
+  const isDesktopTable = layout === 'desktop'
+  const tableRef = useRef<HTMLElement | null>(null)
+  const [hoveredElement, setHoveredElement] = useState<Element | null>(null)
+  const [hoveredPosition, setHoveredPosition] = useState({ left: 0, top: 0 })
+  const periodLabels = ['1', '2', '3', '4', '5', '6', '7', '', '6', '7']
+  const matchedCategories = new Set(
+    elements
+      .filter((element) => {
+        if (!isDesktopTable || matchedAtomicNumbers === undefined) {
+          return true
+        }
 
-      <div className="table-scroll">
-        <div className="table-grid">
-          {elements.map((element) => (
-            <ElementCell
-              key={element.atomicNumber}
-              element={element}
-              isSelected={selectedElement?.atomicNumber === element.atomicNumber}
-              onClick={onSelect}
-            />
-          ))}
+        return matchedAtomicNumbers.has(element.atomicNumber)
+      })
+      .map((element) => element.category),
+  )
+
+  const getDesktopPlacement = (element: Element) => {
+    const isLanthanide = element.category === 'lanthanide'
+    const isActinide = element.category === 'actinide'
+
+    if (isLanthanide) {
+      return {
+        gridColumn: element.atomicNumber - 57 + 3,
+        gridRow: 9,
+      }
+    }
+
+    if (isActinide) {
+      return {
+        gridColumn: element.atomicNumber - 89 + 3,
+        gridRow: 10,
+      }
+    }
+
+    return {
+      gridColumn: element.group,
+      gridRow: element.period,
+    }
+  }
+
+  const getCategoryClassName = (element: Element) => {
+    switch (element.category) {
+      case 'alkali metal':
+        return 'element-cell-alkali'
+      case 'alkaline earth metal':
+        return 'element-cell-alkaline'
+      case 'transition metal':
+        return 'element-cell-transition'
+      case 'post-transition metal':
+        return 'element-cell-post-transition'
+      case 'lanthanide':
+        return 'element-cell-lanthanide'
+      case 'actinide':
+        return 'element-cell-actinide'
+      case 'metalloid':
+        return 'element-cell-metalloid'
+      case 'nonmetal':
+        return 'element-cell-nonmetal'
+      case 'halogen':
+        return 'element-cell-halogen'
+      case 'noble gas':
+        return 'element-cell-noble-gas'
+      default:
+        return ''
+    }
+  }
+
+  const handleHover = (element: Element | null, rect?: DOMRect) => {
+    if (!isDesktopTable || element === null || rect === undefined || tableRef.current === null) {
+      setHoveredElement(null)
+      return
+    }
+
+    const tableRect = tableRef.current.getBoundingClientRect()
+    const overlayWidth = 236
+    const overlayHeight = 250
+    const gap = 12
+
+    const placeLeft =
+      rect.left - tableRect.left + rect.width + gap + overlayWidth <= tableRect.width
+
+    const nextLeft = placeLeft
+      ? rect.left - tableRect.left + rect.width + gap
+      : rect.left - tableRect.left - overlayWidth - gap
+
+    const centeredTop = rect.top - tableRect.top + rect.height / 2 - overlayHeight / 2
+    const nextTop = Math.min(
+      Math.max(12, centeredTop),
+      Math.max(12, tableRect.height - overlayHeight - 12),
+    )
+
+    setHoveredElement(element)
+    setHoveredPosition({ left: nextLeft, top: nextTop })
+  }
+
+  return (
+    <section className="periodic-table" ref={tableRef}>
+      {isDesktopTable ? (
+        <div className="table-toolbar">
+          <div className="table-toolbar-title">Categories</div>
+          <div className="table-category-filters">
+            <button
+              type="button"
+              className={`table-category-chip${selectedCategory === 'all' ? ' is-active' : ''}`}
+              onClick={() => onCategorySelect?.('all')}
+            >
+              All
+            </button>
+            {categories.map((category) => {
+              const isUnavailable =
+                isDesktopTable &&
+                matchedAtomicNumbers !== undefined &&
+                !matchedCategories.has(category.value)
+
+              return (
+                <button
+                  key={category.value}
+                  type="button"
+                  className={`table-category-chip${
+                    selectedCategory === category.value ? ' is-active' : ''
+                  }${isUnavailable ? ' is-disabled' : ''}`}
+                  onClick={() => onCategorySelect?.(category.value)}
+                  disabled={isUnavailable}
+                >
+                  {category.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      <div className={`table-shell${isDesktopTable ? ' table-shell-desktop' : ''}`}>
+        {isDesktopTable ? (
+          <>
+            <div className="table-corner-label" aria-hidden="true">
+              G/P
+            </div>
+            <div className="table-group-labels" aria-hidden="true">
+              {Array.from({ length: 18 }, (_, index) => (
+                <span key={index + 1}>{index + 1}</span>
+              ))}
+            </div>
+            <div className="table-period-labels" aria-hidden="true">
+              {periodLabels.map((label, index) => (
+                <span key={`${label}-${index}`}>{label}</span>
+              ))}
+            </div>
+          </>
+        ) : null}
+
+        <div className="table-scroll">
+          <div className={`table-grid${isDesktopTable ? ' table-grid-desktop' : ''}`}>
+            {elements.map((element) => (
+              <ElementCell
+                key={element.atomicNumber}
+                element={element}
+                isSelected={selectedElement?.atomicNumber === element.atomicNumber}
+                isDimmed={
+                  isDesktopTable &&
+                  matchedAtomicNumbers !== undefined &&
+                  !matchedAtomicNumbers.has(element.atomicNumber)
+                }
+                onClick={onSelect}
+                onHover={isDesktopTable ? handleHover : undefined}
+                style={isDesktopTable ? getDesktopPlacement(element) : undefined}
+                className={[
+                  isDesktopTable ? 'element-cell-desktop' : '',
+                  getCategoryClassName(element),
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              />
+            ))}
+          </div>
         </div>
       </div>
+
+      {isDesktopTable && hoveredElement ? (
+        <div
+          className="table-hover-detail"
+          style={{
+            left: `${hoveredPosition.left}px`,
+            top: `${hoveredPosition.top}px`,
+          }}
+        >
+          <ElementDetail element={hoveredElement} />
+        </div>
+      ) : null}
     </section>
   )
 }

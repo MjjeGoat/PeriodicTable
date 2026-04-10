@@ -4,8 +4,8 @@ import type { SearchBarProps } from '../data/types'
 function Header({ search, setSearch }: SearchBarProps) {
   return (
     <header className="app-header">
-      <div className="header-logo" aria-label="Interactive Periodic Table">
-        <span>IPT</span>
+      <div className="header-logo" aria-label="Logo placeholder">
+        <span>Logo</span>
       </div>
 
       <div className="header-search">
