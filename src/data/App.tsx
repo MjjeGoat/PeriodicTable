@@ -10,7 +10,7 @@ import '../App.css'
 function App() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedElement, setSelectedElement] = useState<Element | null>(elements[0] ?? null)
+  const [selectedElement, setSelectedElement] = useState<Element | null>(null)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [keyboardOffset, setKeyboardOffset] = useState(0)
 
@@ -77,12 +77,12 @@ function App() {
     }
 
     if (
-      selectedElement === null ||
+      selectedElement !== null &&
       !filteredElements.some(
         (element) => element.atomicNumber === selectedElement.atomicNumber,
       )
     ) {
-      setSelectedElement(filteredElements[0])
+      setSelectedElement(null)
     }
   }, [filteredElements, selectedElement])
 
@@ -156,6 +156,7 @@ function App() {
               elements={elements}
               selectedElement={selectedElement}
               onSelect={setSelectedElement}
+              onClearSelection={() => setSelectedElement(null)}
               layout="desktop"
               matchedAtomicNumbers={matchedAtomicNumbers}
               categories={categories.map(({ label, value }) => ({ label, value }))}
@@ -170,6 +171,7 @@ function App() {
             elements={mobileElements}
             selectedElement={selectedElement}
             onSelect={setSelectedElement}
+            onClearSelection={() => setSelectedElement(null)}
             layout="mobile"
           />
         </section>

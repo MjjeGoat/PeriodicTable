@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import { useRef, useState } from 'react'
 import ElementCell from './ElementCell'
 import ElementDetail from './ElementDetail'
@@ -12,6 +13,7 @@ type PeriodicTableProps = {
   elements: Element[]
   selectedElement: Element | null
   onSelect: (element: Element) => void
+  onClearSelection?: () => void
   layout?: 'mobile' | 'desktop'
   matchedAtomicNumbers?: Set<number>
   categories?: CategoryOption[]
@@ -23,6 +25,7 @@ function PeriodicTable({
   elements,
   selectedElement,
   onSelect,
+  onClearSelection,
   layout = 'mobile',
   matchedAtomicNumbers,
   categories = [],
@@ -125,8 +128,24 @@ function PeriodicTable({
     setHoveredPosition({ left: nextLeft, top: nextTop })
   }
 
+  const handleTableMouseDown = (event: MouseEvent<HTMLElement>) => {
+    if (!isDesktopTable) {
+      return
+    }
+
+    const target = event.target as HTMLElement
+    const clickedInteractiveElement =
+      target.closest('.element-cell') !== null ||
+      target.closest('.table-category-chip') !== null ||
+      target.closest('.table-hover-detail') !== null
+
+    if (!clickedInteractiveElement) {
+      onClearSelection?.()
+    }
+  }
+
   return (
-    <section className="periodic-table" ref={tableRef}>
+    <section className="periodic-table" ref={tableRef} onMouseDown={handleTableMouseDown}>
       {isDesktopTable ? (
         <div className="table-toolbar">
           <div className="table-toolbar-title">Categories</div>
