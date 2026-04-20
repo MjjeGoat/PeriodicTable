@@ -203,8 +203,8 @@ function PeriodicTable({
         <div className="table-scroll">
           {elements.length === 0 && !isDesktopTable ? (
             <div className="periodic-table-empty">
-              <h3>No elements yet</h3>
-              <p>Select a category or search for a symbol to show matching elements.</p>
+              <h3>No matching elements</h3>
+              <p>Try another search term or switch back to the All category.</p>
             </div>
           ) : (
             <div className={`table-grid${isDesktopTable ? ' table-grid-desktop' : ''}`}>
