@@ -201,29 +201,36 @@ function PeriodicTable({
         ) : null}
 
         <div className="table-scroll">
-          <div className={`table-grid${isDesktopTable ? ' table-grid-desktop' : ''}`}>
-            {elements.map((element) => (
-              <ElementCell
-                key={element.atomicNumber}
-                element={element}
-                isSelected={selectedElement?.atomicNumber === element.atomicNumber}
-                isDimmed={
-                  isDesktopTable &&
-                  matchedAtomicNumbers !== undefined &&
-                  !matchedAtomicNumbers.has(element.atomicNumber)
-                }
-                onClick={onSelect}
-                onHover={isDesktopTable ? handleHover : undefined}
-                style={isDesktopTable ? getDesktopPlacement(element) : undefined}
-                className={[
-                  isDesktopTable ? 'element-cell-desktop' : '',
-                  getCategoryClassName(element),
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              />
-            ))}
-          </div>
+          {elements.length === 0 && !isDesktopTable ? (
+            <div className="periodic-table-empty">
+              <h3>No elements yet</h3>
+              <p>Select a category or search for a symbol to show matching elements.</p>
+            </div>
+          ) : (
+            <div className={`table-grid${isDesktopTable ? ' table-grid-desktop' : ''}`}>
+              {elements.map((element) => (
+                <ElementCell
+                  key={element.atomicNumber}
+                  element={element}
+                  isSelected={selectedElement?.atomicNumber === element.atomicNumber}
+                  isDimmed={
+                    isDesktopTable &&
+                    matchedAtomicNumbers !== undefined &&
+                    !matchedAtomicNumbers.has(element.atomicNumber)
+                  }
+                  onClick={onSelect}
+                  onHover={isDesktopTable ? handleHover : undefined}
+                  style={isDesktopTable ? getDesktopPlacement(element) : undefined}
+                  className={[
+                    isDesktopTable ? 'element-cell-desktop' : '',
+                    getCategoryClassName(element),
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
