@@ -26,6 +26,20 @@
   z-index: 1;
 }
 
+.app-message {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text-h);
+  box-shadow: var(--shadow);
+}
+
+.app-message-error {
+  border-color: rgba(129, 114, 106, 0.5);
+  background: rgba(255, 244, 238, 0.92);
+}
+
 .mobile-home-card,
 .mobile-category-card,
 .mobile-table-card,
@@ -202,6 +216,23 @@
 .periodic-table {
   display: grid;
   position: relative;
+}
+
+.periodic-table-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 180px;
+  padding: 18px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 243, 236, 0.82));
+}
+
+.periodic-table-empty h3,
+.periodic-table-empty p {
+  margin: 0;
 }
 
 .table-toolbar {

@@ -3,16 +3,91 @@ import Header from '../components/Header'
 import SearchBar from '../components/SearchBar'
 import PeriodicTable from '../components/PeriodicTable'
 import ElementDetail from '../components/ElementDetail'
-import { elements } from './elements'
+import { elements as elementCatalog } from './elements'
+import { loadUiState, saveUiState } from './storage'
 import type { Element } from './types'
 import '../App.css'
 
+const CATEGORIES = [
+  { label: 'Alkali metals', value: 'alkali metal', tone: 'default' as const },
+  {
+    label: 'Alkaline earth metals',
+    value: 'alkaline earth metal',
+    tone: 'default' as const,
+  },
+  {
+    label: 'Transition metals',
+    value: 'transition metal',
+    tone: 'muted' as const,
+  },
+  {
+    label: 'Post-transition metals',
+    value: 'post-transition metal',
+    tone: 'muted' as const,
+  },
+  { label: 'Lanthanides', value: 'lanthanide', tone: 'default' as const },
+  { label: 'Actinides', value: 'actinide', tone: 'default' as const },
+  { label: 'Metalloids', value: 'metalloid', tone: 'muted' as const },
+  { label: 'Other nonmetals', value: 'nonmetal', tone: 'default' as const },
+  { label: 'Halogens', value: 'halogen', tone: 'dark' as const },
+  { label: 'Noble gases', value: 'noble gas', tone: 'dark' as const },
+] as const
+
+const VALID_CATEGORY_VALUES = new Set(['all', ...CATEGORIES.map(({ value }) => value)])
+
+function isValidElement(value: Element) {
+  return (
+    Number.isInteger(value.atomicNumber) &&
+    value.atomicNumber > 0 &&
+    typeof value.symbol === 'string' &&
+    value.symbol.length > 0 &&
+    typeof value.name === 'string' &&
+    value.name.length > 0 &&
+    Number.isFinite(value.atomicMass) &&
+    Number.isInteger(value.group) &&
+    Number.isInteger(value.period) &&
+    typeof value.category === 'string' &&
+    value.category.length > 0
+  )
+}
+
 function App() {
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedElement, setSelectedElement] = useState<Element | null>(null)
+  const [initialUiState] = useState(() => loadUiState(VALID_CATEGORY_VALUES))
+  const [search, setSearch] = useState(initialUiState.search)
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    initialUiState.selectedCategory,
+  )
+  const [selectedElement, setSelectedElement] = useState<Element | null>(() => {
+    if (initialUiState.selectedElementAtomicNumber === null) {
+      return null
+    }
+
+    return (
+      elementCatalog.find(
+        (element) => element.atomicNumber === initialUiState.selectedElementAtomicNumber,
+      ) ?? null
+    )
+  })
+  const [didRecoverState] = useState(initialUiState.hadRecovery)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [keyboardOffset, setKeyboardOffset] = useState(0)
+
+  const { dataError, elements } = useMemo(() => {
+    const hasInvalidElement = elementCatalog.some((element) => !isValidElement(element))
+
+    if (hasInvalidElement) {
+      return {
+        dataError:
+          'Element data could not be fully loaded. The app switched to a safe empty state.',
+        elements: [] as Element[],
+      }
+    }
+
+    return {
+      dataError: null,
+      elements: elementCatalog,
+    }
+  }, [])
 
   const filteredElements = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
@@ -40,31 +115,6 @@ function App() {
 
   const mobileElements =
     search.trim().length > 0 || selectedCategory !== 'all' ? filteredElements : []
-
-  const categories = [
-    { label: 'Alkali metals', value: 'alkali metal', tone: 'default' as const },
-    {
-      label: 'Alkaline earth metals',
-      value: 'alkaline earth metal',
-      tone: 'default' as const,
-    },
-    {
-      label: 'Transition metals',
-      value: 'transition metal',
-      tone: 'muted' as const,
-    },
-    {
-      label: 'Post-transition metals',
-      value: 'post-transition metal',
-      tone: 'muted' as const,
-    },
-    { label: 'Lanthanides', value: 'lanthanide', tone: 'default' as const },
-    { label: 'Actinides', value: 'actinide', tone: 'default' as const },
-    { label: 'Metalloids', value: 'metalloid', tone: 'muted' as const },
-    { label: 'Other nonmetals', value: 'nonmetal', tone: 'default' as const },
-    { label: 'Halogens', value: 'halogen', tone: 'dark' as const },
-    { label: 'Noble gases', value: 'noble gas', tone: 'dark' as const },
-  ]
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category)
@@ -112,11 +162,31 @@ function App() {
     }
   }, [isSearchFocused])
 
+  useEffect(() => {
+    saveUiState({
+      search,
+      selectedCategory,
+      selectedElementAtomicNumber: selectedElement?.atomicNumber ?? null,
+    })
+  }, [search, selectedCategory, selectedElement])
+
   return (
     <div className="app-shell">
       <Header search={search} setSearch={setSearch} />
 
       <main className="app-main">
+        {dataError ? (
+          <section className="app-message app-message-error" aria-live="polite">
+            {dataError}
+          </section>
+        ) : null}
+
+        {didRecoverState && !dataError ? (
+          <section className="app-message" aria-live="polite">
+            Saved state contained invalid values and was safely reset.
+          </section>
+        ) : null}
+
         <section className="mobile-home-card" aria-label="Mobile hero">
           <div className="logo-placeholder" aria-label="Logo placeholder">
             <span>Logo</span>
@@ -130,7 +200,7 @@ function App() {
 
         <section className="mobile-category-card">
           <nav className="mobile-actions" aria-label="Element categories">
-            {categories.map((category) => (
+            {CATEGORIES.map((category) => (
               <button
                 key={category.value}
                 className={[
@@ -159,7 +229,7 @@ function App() {
               onClearSelection={() => setSelectedElement(null)}
               layout="desktop"
               matchedAtomicNumbers={matchedAtomicNumbers}
-              categories={categories.map(({ label, value }) => ({ label, value }))}
+              categories={CATEGORIES.map(({ label, value }) => ({ label, value }))}
               selectedCategory={selectedCategory}
               onCategorySelect={handleCategorySelect}
             />
