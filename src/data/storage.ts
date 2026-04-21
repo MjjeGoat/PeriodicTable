@@ -2,12 +2,14 @@ const STORAGE_KEYS = {
   search: 'periodic-table:search',
   selectedCategory: 'periodic-table:selected-category',
   selectedElementAtomicNumber: 'periodic-table:selected-element',
+  theme: 'periodic-table:theme',
 } as const
 
 export type PersistedUiState = {
   search: string
   selectedCategory: string
   selectedElementAtomicNumber: number | null
+  theme: 'light' | 'dark'
   hadRecovery: boolean
 }
 
@@ -15,6 +17,7 @@ const DEFAULT_UI_STATE: PersistedUiState = {
   search: '',
   selectedCategory: 'all',
   selectedElementAtomicNumber: null,
+  theme: 'light',
   hadRecovery: false,
 }
 
@@ -35,6 +38,7 @@ export function loadUiState(validCategories: Set<string>): PersistedUiState {
     const rawSelectedElement = window.localStorage.getItem(
       STORAGE_KEYS.selectedElementAtomicNumber,
     )
+    const rawTheme = window.localStorage.getItem(STORAGE_KEYS.theme)
 
     const search = rawSearch === null ? '' : rawSearch
 
@@ -63,10 +67,17 @@ export function loadUiState(validCategories: Set<string>): PersistedUiState {
       hadRecovery = true
     }
 
+    const theme = rawTheme === 'dark' || rawTheme === 'light' ? rawTheme : 'light'
+
+    if (rawTheme !== null && rawTheme !== 'dark' && rawTheme !== 'light') {
+      hadRecovery = true
+    }
+
     return {
       search,
       selectedCategory,
       selectedElementAtomicNumber,
+      theme,
       hadRecovery,
     }
   } catch {
@@ -85,6 +96,7 @@ export function saveUiState(state: Omit<PersistedUiState, 'hadRecovery'>) {
   try {
     window.localStorage.setItem(STORAGE_KEYS.search, state.search)
     window.localStorage.setItem(STORAGE_KEYS.selectedCategory, state.selectedCategory)
+    window.localStorage.setItem(STORAGE_KEYS.theme, state.theme)
 
     if (state.selectedElementAtomicNumber === null) {
       window.localStorage.removeItem(STORAGE_KEYS.selectedElementAtomicNumber)
