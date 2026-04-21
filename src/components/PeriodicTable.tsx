@@ -1,5 +1,6 @@
 import type { MouseEvent } from 'react'
 import { useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import ElementCell from './ElementCell'
 import ElementDetail from './ElementDetail'
 import type { Element } from '../data/types'
@@ -55,7 +56,7 @@ function PeriodicTable({
       .map((element) => element.category),
   )
 
-  useLayoutEffect(() => {
+  const updateHoveredPosition = () => {
     if (
       !isDesktopTable ||
       hoveredElement === null ||
@@ -66,12 +67,8 @@ function PeriodicTable({
     }
 
     const visualViewport = window.visualViewport
-    const viewportLeft = visualViewport?.offsetLeft ?? 0
-    const viewportTop = visualViewport?.offsetTop ?? 0
     const viewportWidth = visualViewport?.width ?? window.innerWidth
     const viewportHeight = visualViewport?.height ?? window.innerHeight
-    const viewportRight = viewportLeft + viewportWidth
-    const viewportBottom = viewportTop + viewportHeight
     const gap = 12
     const viewportPadding = 12
     const overlayRect = hoverDetailRef.current.getBoundingClientRect()
@@ -81,7 +78,7 @@ function PeriodicTable({
     const boundedOverlayHeight = Math.min(overlayHeight, availableHeight)
 
     const placeRight =
-      hoveredAnchorRect.right + gap + overlayWidth <= viewportRight - viewportPadding
+      hoveredAnchorRect.right + gap + overlayWidth <= viewportWidth - viewportPadding
 
     const preferredLeft = placeRight
       ? hoveredAnchorRect.right + gap
@@ -90,12 +87,12 @@ function PeriodicTable({
     const centeredTop =
       hoveredAnchorRect.top + hoveredAnchorRect.height / 2 - overlayHeight / 2
     const nextLeft = Math.min(
-      Math.max(viewportLeft + viewportPadding, preferredLeft),
-      viewportRight - overlayWidth - viewportPadding,
+      Math.max(viewportPadding, preferredLeft),
+      viewportWidth - overlayWidth - viewportPadding,
     )
     const nextTop = Math.min(
-      Math.max(viewportTop + viewportPadding, centeredTop),
-      viewportBottom - boundedOverlayHeight - viewportPadding,
+      Math.max(viewportPadding, centeredTop),
+      viewportHeight - boundedOverlayHeight - viewportPadding,
     )
 
     setHoveredPosition((currentPosition) => {
@@ -109,6 +106,36 @@ function PeriodicTable({
 
       return { left: nextLeft, top: nextTop, maxHeight: availableHeight }
     })
+  }
+
+  useLayoutEffect(() => {
+    if (!isDesktopTable || hoveredElement === null || hoveredAnchorRect === null) {
+      return
+    }
+
+    updateHoveredPosition()
+  }, [isDesktopTable, hoveredAnchorRect, hoveredElement])
+
+  useLayoutEffect(() => {
+    if (!isDesktopTable || hoveredElement === null || hoveredAnchorRect === null) {
+      return
+    }
+
+    const handleViewportChange = () => {
+      updateHoveredPosition()
+    }
+
+    window.addEventListener('scroll', handleViewportChange, true)
+    window.addEventListener('resize', handleViewportChange)
+    window.visualViewport?.addEventListener('resize', handleViewportChange)
+    window.visualViewport?.addEventListener('scroll', handleViewportChange)
+
+    return () => {
+      window.removeEventListener('scroll', handleViewportChange, true)
+      window.removeEventListener('resize', handleViewportChange)
+      window.visualViewport?.removeEventListener('resize', handleViewportChange)
+      window.visualViewport?.removeEventListener('scroll', handleViewportChange)
+    }
   }, [isDesktopTable, hoveredAnchorRect, hoveredElement])
 
   const getDesktopPlacement = (element: Element) => {
@@ -279,19 +306,24 @@ function PeriodicTable({
         </div>
       </div>
 
-      {isDesktopTable && hoveredElement ? (
-        <div
-          ref={hoverDetailRef}
-          className="table-hover-detail"
-          style={{
-            left: `${hoveredPosition.left}px`,
-            top: `${hoveredPosition.top}px`,
-            maxHeight: `${hoveredPosition.maxHeight}px`,
-          }}
-        >
-          <ElementDetail element={hoveredElement} />
-        </div>
-      ) : null}
+      {isDesktopTable &&
+      hoveredElement &&
+      typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              ref={hoverDetailRef}
+              className="table-hover-detail"
+              style={{
+                left: `${hoveredPosition.left}px`,
+                top: `${hoveredPosition.top}px`,
+                maxHeight: `${hoveredPosition.maxHeight}px`,
+              }}
+            >
+              <ElementDetail element={hoveredElement} />
+            </div>,
+            document.body,
+          )
+        : null}
     </section>
   )
 }
