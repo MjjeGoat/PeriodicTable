@@ -37,7 +37,11 @@ function PeriodicTable({
   const hoverDetailRef = useRef<HTMLDivElement | null>(null)
   const [hoveredElement, setHoveredElement] = useState<Element | null>(null)
   const [hoveredAnchorRect, setHoveredAnchorRect] = useState<DOMRect | null>(null)
-  const [hoveredPosition, setHoveredPosition] = useState({ left: 0, top: 0 })
+  const [hoveredPosition, setHoveredPosition] = useState({
+    left: 0,
+    top: 0,
+    maxHeight: 0,
+  })
   const periodLabels = ['1', '2', '3', '4', '5', '6', '7', '', '6', '7']
   const matchedCategories = new Set(
     elements
@@ -61,16 +65,23 @@ function PeriodicTable({
       return
     }
 
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
+    const visualViewport = window.visualViewport
+    const viewportLeft = visualViewport?.offsetLeft ?? 0
+    const viewportTop = visualViewport?.offsetTop ?? 0
+    const viewportWidth = visualViewport?.width ?? window.innerWidth
+    const viewportHeight = visualViewport?.height ?? window.innerHeight
+    const viewportRight = viewportLeft + viewportWidth
+    const viewportBottom = viewportTop + viewportHeight
     const gap = 12
     const viewportPadding = 12
     const overlayRect = hoverDetailRef.current.getBoundingClientRect()
     const overlayWidth = overlayRect.width
     const overlayHeight = overlayRect.height
+    const availableHeight = Math.max(160, viewportHeight - viewportPadding * 2)
+    const boundedOverlayHeight = Math.min(overlayHeight, availableHeight)
 
     const placeRight =
-      hoveredAnchorRect.right + gap + overlayWidth <= viewportWidth - viewportPadding
+      hoveredAnchorRect.right + gap + overlayWidth <= viewportRight - viewportPadding
 
     const preferredLeft = placeRight
       ? hoveredAnchorRect.right + gap
@@ -79,23 +90,24 @@ function PeriodicTable({
     const centeredTop =
       hoveredAnchorRect.top + hoveredAnchorRect.height / 2 - overlayHeight / 2
     const nextLeft = Math.min(
-      Math.max(viewportPadding, preferredLeft),
-      viewportWidth - overlayWidth - viewportPadding,
+      Math.max(viewportLeft + viewportPadding, preferredLeft),
+      viewportRight - overlayWidth - viewportPadding,
     )
     const nextTop = Math.min(
-      Math.max(viewportPadding, centeredTop),
-      viewportHeight - overlayHeight - viewportPadding,
+      Math.max(viewportTop + viewportPadding, centeredTop),
+      viewportBottom - boundedOverlayHeight - viewportPadding,
     )
 
     setHoveredPosition((currentPosition) => {
       if (
         Math.abs(currentPosition.left - nextLeft) < 0.5 &&
-        Math.abs(currentPosition.top - nextTop) < 0.5
+        Math.abs(currentPosition.top - nextTop) < 0.5 &&
+        Math.abs(currentPosition.maxHeight - availableHeight) < 0.5
       ) {
         return currentPosition
       }
 
-      return { left: nextLeft, top: nextTop }
+      return { left: nextLeft, top: nextTop, maxHeight: availableHeight }
     })
   }, [isDesktopTable, hoveredAnchorRect, hoveredElement])
 
@@ -274,6 +286,7 @@ function PeriodicTable({
           style={{
             left: `${hoveredPosition.left}px`,
             top: `${hoveredPosition.top}px`,
+            maxHeight: `${hoveredPosition.maxHeight}px`,
           }}
         >
           <ElementDetail element={hoveredElement} />

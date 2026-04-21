@@ -781,6 +781,7 @@
     display: block;
     position: fixed;
     width: 236px;
+    max-width: calc(100vw - 24px);
     pointer-events: none;
     z-index: 4;
     animation: fade-scale-in 0.18s ease;
@@ -793,6 +794,8 @@
     background: var(--surface-strong);
     box-shadow: var(--shadow);
     backdrop-filter: blur(8px);
+    max-height: inherit;
+    overflow: auto;
   }
 
   .table-hover-detail .element-detail-head h2 {
