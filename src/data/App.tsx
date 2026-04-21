@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import SearchBar from '../components/SearchBar'
 import PeriodicTable from '../components/PeriodicTable'
 import ElementDetail from '../components/ElementDetail'
+import CredentialsModal from '../components/CredentialsModal'
 import { elements as elementCatalog } from './elements'
 import { loadUiState, saveUiState } from './storage'
 import type { Element } from './types'
@@ -69,6 +70,8 @@ function App() {
     )
   })
   const [didRecoverState] = useState(initialUiState.hadRecovery)
+  const [theme, setTheme] = useState<'light' | 'dark'>(initialUiState.theme)
+  const [isCredentialsOpen, setIsCredentialsOpen] = useState(false)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [keyboardOffset, setKeyboardOffset] = useState(0)
 
@@ -120,6 +123,10 @@ function App() {
     setSelectedCategory(category)
   }
 
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light'))
+  }
+
   useEffect(() => {
     if (filteredElements.length === 0) {
       setSelectedElement(null)
@@ -167,12 +174,23 @@ function App() {
       search,
       selectedCategory,
       selectedElementAtomicNumber: selectedElement?.atomicNumber ?? null,
+      theme,
     })
-  }, [search, selectedCategory, selectedElement])
+  }, [search, selectedCategory, selectedElement, theme])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
 
   return (
     <div className="app-shell">
-      <Header search={search} setSearch={setSearch} />
+      <Header
+        search={search}
+        setSearch={setSearch}
+        isDarkTheme={theme === 'dark'}
+        onToggleTheme={toggleTheme}
+        onOpenCredentials={() => setIsCredentialsOpen(true)}
+      />
 
       <main className="app-main">
         {dataError ? (
@@ -257,8 +275,11 @@ function App() {
       >
         <button
           type="button"
-          className="icon-button mobile-bottom-search__button"
-          aria-label="Toggle contrast"
+          className={`icon-button mobile-bottom-search__button${
+            theme === 'dark' ? ' is-active' : ''
+          }`}
+          aria-label="Toggle dark theme"
+          onClick={toggleTheme}
         >
           ◐
         </button>
@@ -275,11 +296,17 @@ function App() {
         <button
           type="button"
           className="icon-button mobile-bottom-search__button"
-          aria-label="Open info"
+          aria-label="Open credentials"
+          onClick={() => setIsCredentialsOpen(true)}
         >
           ⓘ
         </button>
       </div>
+
+      <CredentialsModal
+        isOpen={isCredentialsOpen}
+        onClose={() => setIsCredentialsOpen(false)}
+      />
     </div>
   )
 }

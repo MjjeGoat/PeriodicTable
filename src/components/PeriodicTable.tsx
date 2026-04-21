@@ -106,22 +106,27 @@ function PeriodicTable({
       return
     }
 
-    const tableRect = tableRef.current.getBoundingClientRect()
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
     const overlayWidth = 236
     const overlayHeight = 250
     const gap = 12
+    const viewportPadding = 12
 
-    const placeLeft =
-      rect.left - tableRect.left + rect.width + gap + overlayWidth <= tableRect.width
+    const placeRight = rect.right + gap + overlayWidth <= viewportWidth - viewportPadding
 
-    const nextLeft = placeLeft
-      ? rect.left - tableRect.left + rect.width + gap
-      : rect.left - tableRect.left - overlayWidth - gap
+    const preferredLeft = placeRight
+      ? rect.right + gap
+      : rect.left - overlayWidth - gap
 
-    const centeredTop = rect.top - tableRect.top + rect.height / 2 - overlayHeight / 2
+    const centeredTop = rect.top + rect.height / 2 - overlayHeight / 2
+    const nextLeft = Math.min(
+      Math.max(viewportPadding, preferredLeft),
+      viewportWidth - overlayWidth - viewportPadding,
+    )
     const nextTop = Math.min(
-      Math.max(12, centeredTop),
-      Math.max(12, tableRect.height - overlayHeight - 12),
+      Math.max(viewportPadding, centeredTop),
+      Math.max(viewportPadding, viewportHeight - overlayHeight - viewportPadding),
     )
 
     setHoveredElement(element)
