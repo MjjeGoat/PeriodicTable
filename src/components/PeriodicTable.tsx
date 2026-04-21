@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react'
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import ElementCell from './ElementCell'
 import ElementDetail from './ElementDetail'
 import type { Element } from '../data/types'
@@ -34,7 +34,9 @@ function PeriodicTable({
 }: PeriodicTableProps) {
   const isDesktopTable = layout === 'desktop'
   const tableRef = useRef<HTMLElement | null>(null)
+  const hoverDetailRef = useRef<HTMLDivElement | null>(null)
   const [hoveredElement, setHoveredElement] = useState<Element | null>(null)
+  const [hoveredAnchorRect, setHoveredAnchorRect] = useState<DOMRect | null>(null)
   const [hoveredPosition, setHoveredPosition] = useState({ left: 0, top: 0 })
   const periodLabels = ['1', '2', '3', '4', '5', '6', '7', '', '6', '7']
   const matchedCategories = new Set(
@@ -48,6 +50,54 @@ function PeriodicTable({
       })
       .map((element) => element.category),
   )
+
+  useLayoutEffect(() => {
+    if (
+      !isDesktopTable ||
+      hoveredElement === null ||
+      hoveredAnchorRect === null ||
+      hoverDetailRef.current === null
+    ) {
+      return
+    }
+
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    const gap = 12
+    const viewportPadding = 12
+    const overlayRect = hoverDetailRef.current.getBoundingClientRect()
+    const overlayWidth = overlayRect.width
+    const overlayHeight = overlayRect.height
+
+    const placeRight =
+      hoveredAnchorRect.right + gap + overlayWidth <= viewportWidth - viewportPadding
+
+    const preferredLeft = placeRight
+      ? hoveredAnchorRect.right + gap
+      : hoveredAnchorRect.left - overlayWidth - gap
+
+    const centeredTop =
+      hoveredAnchorRect.top + hoveredAnchorRect.height / 2 - overlayHeight / 2
+    const nextLeft = Math.min(
+      Math.max(viewportPadding, preferredLeft),
+      viewportWidth - overlayWidth - viewportPadding,
+    )
+    const nextTop = Math.min(
+      Math.max(viewportPadding, centeredTop),
+      viewportHeight - overlayHeight - viewportPadding,
+    )
+
+    setHoveredPosition((currentPosition) => {
+      if (
+        Math.abs(currentPosition.left - nextLeft) < 0.5 &&
+        Math.abs(currentPosition.top - nextTop) < 0.5
+      ) {
+        return currentPosition
+      }
+
+      return { left: nextLeft, top: nextTop }
+    })
+  }, [isDesktopTable, hoveredAnchorRect, hoveredElement])
 
   const getDesktopPlacement = (element: Element) => {
     const isLanthanide = element.category === 'lanthanide'
@@ -103,34 +153,12 @@ function PeriodicTable({
   const handleHover = (element: Element | null, rect?: DOMRect) => {
     if (!isDesktopTable || element === null || rect === undefined || tableRef.current === null) {
       setHoveredElement(null)
+      setHoveredAnchorRect(null)
       return
     }
 
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-    const overlayWidth = 236
-    const overlayHeight = 250
-    const gap = 12
-    const viewportPadding = 12
-
-    const placeRight = rect.right + gap + overlayWidth <= viewportWidth - viewportPadding
-
-    const preferredLeft = placeRight
-      ? rect.right + gap
-      : rect.left - overlayWidth - gap
-
-    const centeredTop = rect.top + rect.height / 2 - overlayHeight / 2
-    const nextLeft = Math.min(
-      Math.max(viewportPadding, preferredLeft),
-      viewportWidth - overlayWidth - viewportPadding,
-    )
-    const nextTop = Math.min(
-      Math.max(viewportPadding, centeredTop),
-      Math.max(viewportPadding, viewportHeight - overlayHeight - viewportPadding),
-    )
-
     setHoveredElement(element)
-    setHoveredPosition({ left: nextLeft, top: nextTop })
+    setHoveredAnchorRect(rect)
   }
 
   const handleTableMouseDown = (event: MouseEvent<HTMLElement>) => {
@@ -241,6 +269,7 @@ function PeriodicTable({
 
       {isDesktopTable && hoveredElement ? (
         <div
+          ref={hoverDetailRef}
           className="table-hover-detail"
           style={{
             left: `${hoveredPosition.left}px`,
