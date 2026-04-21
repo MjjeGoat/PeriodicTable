@@ -4,6 +4,10 @@
   --bg: #fffdf7;
   --border: #e7e2d8;
   --code-bg: #f4f3ec;
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-strong: rgba(255, 255, 255, 0.96);
+  --surface-muted: rgba(244, 243, 236, 0.78);
+  --overlay: rgba(8, 10, 14, 0.45);
   --accent: #81726a;
   --accent-bg: #f4fec1;
   --accent-strong: #d9f9a5;
@@ -15,6 +19,16 @@
   --shadow:
     rgba(129, 114, 106, 0.12) 0 12px 24px -8px,
     rgba(129, 114, 106, 0.08) 0 4px 10px -4px;
+  --cell-alkali: #f7fcb9;
+  --cell-alkaline: #e7f8be;
+  --cell-transition: #dcefb2;
+  --cell-post-transition: #dce9c8;
+  --cell-lanthanide: #f8ecd2;
+  --cell-actinide: #f4dfc5;
+  --cell-metalloid: #d7ddd5;
+  --cell-nonmetal: #ececcf;
+  --cell-halogen: #cfd8c4;
+  --cell-noble-gas: #d6cbc4;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -36,22 +50,36 @@
 }
 
 :root[data-theme='dark'] {
-  --text: #bcb6c5;
-  --text-h: #f7f3eb;
-  --bg: #1b1f26;
-  --border: #39404d;
-  --code-bg: #252b35;
-  --accent: #d9c9b5;
-  --accent-bg: #7a9c32;
-  --accent-strong: #a6d437;
-  --accent-muted: #698259;
-  --accent-border: rgba(166, 212, 55, 0.5);
-  --social-bg: rgba(37, 43, 53, 0.72);
-  --bg-glow-top: rgba(122, 156, 50, 0.24);
-  --bg-glow-bottom: rgba(166, 212, 55, 0.18);
+  --text: #bfc6d4;
+  --text-h: #f4f7fb;
+  --bg: #141922;
+  --border: #36404f;
+  --code-bg: #212837;
+  --surface: rgba(23, 29, 40, 0.9);
+  --surface-strong: rgba(26, 33, 46, 0.95);
+  --surface-muted: rgba(33, 40, 55, 0.82);
+  --overlay: rgba(7, 10, 16, 0.72);
+  --accent: #c6d0de;
+  --accent-bg: #6e9f2e;
+  --accent-strong: #9dd23a;
+  --accent-muted: #4f6f52;
+  --accent-border: rgba(157, 210, 58, 0.42);
+  --social-bg: rgba(33, 40, 55, 0.82);
+  --bg-glow-top: rgba(110, 159, 46, 0.18);
+  --bg-glow-bottom: rgba(97, 142, 227, 0.14);
   --shadow:
     rgba(0, 0, 0, 0.35) 0 16px 32px -12px,
     rgba(0, 0, 0, 0.2) 0 6px 14px -8px;
+  --cell-alkali: #6f9432;
+  --cell-alkaline: #5c8645;
+  --cell-transition: #4d7d5e;
+  --cell-post-transition: #4f6f7a;
+  --cell-lanthanide: #8d6e35;
+  --cell-actinide: #93624a;
+  --cell-metalloid: #4e6d76;
+  --cell-nonmetal: #6d7f2e;
+  --cell-halogen: #5b7a3e;
+  --cell-noble-gas: #765e76;
 }
 
 body {

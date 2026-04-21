@@ -1,11 +1,18 @@
-export const credentials = {
+type CredentialsData = {
+  heading: string
+  description?: string
+  items: Array<{
+    label: string
+    value: string
+  }>
+}
+
+export const credentials: CredentialsData = {
   heading: 'Credentials',
-  description:
-    'Replace these placeholder values with your final project information before submission.',
   items: [
     { label: 'Project', value: 'Interactive Periodic Table' },
-    { label: 'Author', value: 'Your Name Here' },
-    { label: 'Class', value: 'Your Class / Group' },
+    { label: 'Author', value: 'Zdeněk Vacek & Matěj Hanzlík' },
+    { label: 'Class', value: 'C3a' },
     { label: 'School year', value: '2025/2026' },
   ],
 }

@@ -182,6 +182,22 @@ function App() {
     document.documentElement.dataset.theme = theme
   }, [theme])
 
+  useEffect(() => {
+    const { documentElement, body } = document
+    const previousHtmlOverflow = documentElement.style.overflow
+    const previousBodyOverflow = body.style.overflow
+
+    if (isCredentialsOpen) {
+      documentElement.style.overflow = 'hidden'
+      body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      documentElement.style.overflow = previousHtmlOverflow
+      body.style.overflow = previousBodyOverflow
+    }
+  }, [isCredentialsOpen])
+
   return (
     <div className="app-shell">
       <Header

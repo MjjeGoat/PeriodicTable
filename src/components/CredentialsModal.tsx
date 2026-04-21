@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { credentials } from '../data/credentials'
 
 type CredentialsModalProps = {
@@ -6,6 +7,24 @@ type CredentialsModalProps = {
 }
 
 function CredentialsModal({ isOpen, onClose }: CredentialsModalProps) {
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
+
   if (!isOpen) {
     return null
   }
@@ -22,7 +41,7 @@ function CredentialsModal({ isOpen, onClose }: CredentialsModalProps) {
         <div className="credentials-modal__header">
           <div>
             <h2 id="credentials-title">{credentials.heading}</h2>
-            <p>{credentials.description}</p>
+            {credentials.description ? <p>{credentials.description}</p> : null}
           </div>
 
           <button
