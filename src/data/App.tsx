@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Header from '../components/Header'
 import SearchBar from '../components/SearchBar'
 import PeriodicTable from '../components/PeriodicTable'
@@ -53,6 +53,11 @@ function isValidElement(value: Element) {
 }
 
 function App() {
+  const logoSrc = `${import.meta.env.BASE_URL}logo.png`
+  const mobileTableCardRef = useRef<HTMLElement | null>(null)
+  const mobileDetailCardRef = useRef<HTMLElement | null>(null)
+  const hasHandledInitialMobileCategory = useRef(false)
+  const hasHandledInitialMobileElement = useRef(false)
   const [initialUiState] = useState(() => loadUiState(VALID_CATEGORY_VALUES))
   const [search, setSearch] = useState(initialUiState.search)
   const [selectedCategory, setSelectedCategory] = useState<string>(
@@ -198,6 +203,60 @@ function App() {
     }
   }, [isCredentialsOpen])
 
+  useEffect(() => {
+    if (!hasHandledInitialMobileCategory.current) {
+      hasHandledInitialMobileCategory.current = true
+      return
+    }
+
+    if (typeof window === 'undefined' || window.innerWidth >= 900) {
+      return
+    }
+
+    if (mobileTableCardRef.current === null) {
+      return
+    }
+
+    const nextTop =
+      window.scrollY + mobileTableCardRef.current.getBoundingClientRect().top - 16
+
+    window.scrollTo({
+      top: Math.max(0, nextTop),
+      behavior: 'smooth',
+    })
+  }, [selectedCategory])
+
+  useEffect(() => {
+    if (!hasHandledInitialMobileElement.current) {
+      hasHandledInitialMobileElement.current = true
+      return
+    }
+
+    if (
+      selectedElement === null ||
+      typeof window === 'undefined' ||
+      window.innerWidth >= 900
+    ) {
+      return
+    }
+
+    const scrollToDetail = () => {
+      if (mobileDetailCardRef.current === null) {
+        return
+      }
+
+      const nextTop =
+        window.scrollY + mobileDetailCardRef.current.getBoundingClientRect().top - 16
+
+      window.scrollTo({
+        top: Math.max(0, nextTop),
+        behavior: 'smooth',
+      })
+    }
+
+    window.requestAnimationFrame(scrollToDetail)
+  }, [selectedElement])
+
   return (
     <div className="app-shell">
       <Header
@@ -222,8 +281,8 @@ function App() {
         ) : null}
 
         <section className="mobile-home-card" aria-label="Mobile hero">
-          <div className="logo-placeholder" aria-label="Logo placeholder">
-            <span>Logo</span>
+          <div className="logo-placeholder" aria-label="Periodic Table logo">
+            <img src={logoSrc} alt="Periodic Table" className="logo-placeholder__image" />
           </div>
 
           <div className="mobile-home-copy">
@@ -270,7 +329,7 @@ function App() {
           </section>
         </div>
 
-        <section className="mobile-table-card">
+        <section className="mobile-table-card" ref={mobileTableCardRef}>
           <PeriodicTable
             elements={mobileElements}
             selectedElement={selectedElement}
@@ -280,7 +339,7 @@ function App() {
           />
         </section>
 
-        <section className="mobile-detail-card">
+        <section className="mobile-detail-card" ref={mobileDetailCardRef}>
           <ElementDetail element={selectedElement} />
         </section>
       </main>

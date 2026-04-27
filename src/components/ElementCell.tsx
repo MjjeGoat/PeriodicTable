@@ -15,6 +15,7 @@ function ElementCell({
 }: ElementCellProps) {
   return (
     <button
+      data-atomic-number={element.atomicNumber}
       className={`element-cell${isSelected ? ' is-selected' : ''}${isDimmed ? ' is-dimmed' : ''}${className ? ` ${className}` : ''}`}
       type="button"
       onClick={() => onClick(element)}

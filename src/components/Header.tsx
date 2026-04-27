@@ -14,10 +14,12 @@ function Header({
   onToggleTheme,
   onOpenCredentials,
 }: HeaderProps) {
+  const logoSrc = `${import.meta.env.BASE_URL}logo.png`
+
   return (
     <header className="app-header">
-      <div className="header-logo" aria-label="Logo placeholder">
-        <span>Logo</span>
+      <div className="header-logo" aria-label="Periodic Table logo">
+        <img src={logoSrc} alt="Periodic Table" className="header-logo__image" />
       </div>
 
       <div className="header-search">
